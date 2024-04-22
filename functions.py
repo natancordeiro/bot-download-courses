@@ -1,8 +1,11 @@
 import pickle
 import tempfile
 import os
+import re
 import time
 from tqdm import tqdm
+from unidecode import unidecode
+import sys
 
 def create_txt():
     """
@@ -154,3 +157,29 @@ def return_total_videos(dict) -> int:
     for aula in dict:
         total_videos += len(aula['videos'])
     return total_videos
+
+def clear_name(name: str) -> str:
+    """
+    Limpa o nome do curso.
+    """
+    return unidecode(re.sub(r'[^\w\s-]', '', name))
+
+def remove_ultima_linha():
+    """Remove a última linha do terminal."""
+
+    sys.stdout.write("\033[F")
+    sys.stdout.write("\033[K")
+    sys.stdout.write("\033[F")
+    sys.stdout.write("\033[K")
+
+def remove_tmp_files(directory:str) -> bool:
+    """
+    Remove arquivos temporários.
+
+    Args:
+        directory: Diretório dos arquivos temporários.
+    """
+    for filename in os.listdir(directory):
+        if filename.endswith(".tmp"):
+            file_path = os.path.join(directory, filename)
+            os.remove(file_path)

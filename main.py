@@ -24,6 +24,7 @@ def main():
                 nome_usuario = line.split('-')[2].strip()
                 print(f"{numero}.\nAcessar usando a conta: {nome_usuario}\n")
             escolha = input("> Digite sua escolha: ")
+            print('\n')
 
             if escolha == "0":
                 print("+ Adicionando conta...")
@@ -88,31 +89,43 @@ def main():
                 i -= 1
 
         escolha = input("> Digite a sua escolha: ")
+        print('\n')
         sair = True
         for curso in lista_cursos:
             if escolha == str(curso['id']):
                 sair = False
                 print("+ Obtendo dados do curso...")
                 time.sleep(1)
-                filename = os.path.join(os.getcwd(), curso['nome'])
+                filename = os.path.join(os.getcwd(), clear_name(curso['nome']))
                 os.makedirs(filename, exist_ok=True)
                 os.system('cls' if os.name == 'nt' else 'clear')
                 data = get_course_data(page, curso)
                 total = return_total_videos(data)
-                bar = tqdm(total, desc="Baixando Vídeos")
+                indice = 0
+                os.system('cls' if os.name == 'nt' else 'clear')
 
-                for item in data:
-                    bar.set_description(f"Baixando Vídeos {item['id']}")
+                for item in tqdm(data, desc=f"Baixando Vídeos da {data[indice]['nome']}", total=total):
+
                     nome_aula = f"{item['id']}_{item['nome']}"
-                    dir_aula = os.path.join(filename, nome_aula)
+                    dir_aula = os.path.join(filename, clear_name(nome_aula))
                     os.makedirs(dir_aula, exist_ok=True)
                     for video in item['videos']:
-                        nome_video = f"{video['id']}_{video['nome']}.mp4"
+                        nome_video = f"{clear_name(video['id'])}_{clear_name(video['nome'])}.mp4"
+                        nome_video = f"{clear_name(video['id'])}.mp4"
                         path = os.path.join(dir_aula, nome_video)
-                        wget.download(video['link'], path)
-                        bar.update(1)
+                        print('\n')
+                        wget.download(video['link'], 'temp.mp4')
+                        os.system('cls')
+                        try:
+                            os.rename('temp.mp4', path)
+                        except FileExistsError:
+                            os.remove(path)
+                            os.rename('temp.mp4', path)
+                    indice += 1
 
+                print('\n')
                 print("> Curso baixado com sucesso")
+                remove_tmp_files(os.getcwd())
         if sair:
             print("x Opção Inválida")
             exit(0)
@@ -121,12 +134,17 @@ def main():
 
 if __name__ == "__main__":
     txt_file = create_txt()
+    try:
+        os.remove('temp.mp4')
+    except:
+        pass
 
     os.system('cls' if os.name == 'nt' else 'clear')
     print("+ Selecione o seu provedor de serviços:\n")
     print("1.\nNome: Estratégia Concursos\nURL: https://estrategiaconcursos.com.br\n")
     print("2.Sair\n")
     escolha = input("> Digite sua escolha: ")
+    print('\n')
 
     if escolha == "1":
         main()
