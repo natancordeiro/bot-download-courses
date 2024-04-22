@@ -3,6 +3,7 @@ import time
 import os
 import wget
 from tqdm import tqdm
+import subprocess
 
 from functions import *
 
@@ -133,6 +134,7 @@ def main():
         browser.close()
 
 if __name__ == "__main__":
+    subprocess.run('playright install chromium', shell=True, check=True)
     txt_file = create_txt()
     try:
         os.remove('temp.mp4')
