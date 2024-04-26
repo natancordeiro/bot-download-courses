@@ -1,8 +1,6 @@
 from playwright.sync_api import sync_playwright
 import time
 import os
-import wget
-from tqdm import tqdm
 import subprocess
 
 from functions import *
@@ -58,88 +56,50 @@ def main():
             time.sleep(1)
             email = input("> Insira seu usuário: ")
             password = input("> Insira sua senha: ")
-            email = "regustavosisosiso@gmail.com"
-            password = "decanoato1991"
             user_login = login(page, email, password)
             if user_login:
-                print("> Login efetuado com sucesso")
+                print("+ Login efetuado com sucesso")
             else:
                 print("x Login não efetuado com sucesso")
                 exit(0)
 
             save_file_name(page, txt_file, user_login)
 
-        cursos = return_courses(page)
-        lista_cursos = []
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print("+ Selecione o que deseja baixar: \n")
-        for i, curso in enumerate(cursos):
-            course = {}
-            nome_curso = curso.wait_for_selector('xpath=.//h1').inner_text()
-            qualificacao = curso.wait_for_selector('xpath=./../../h2').inner_text()
-            url = curso.wait_for_selector('xpath=./a').get_attribute('href')
-            if 'aula' in url:
-                url = "https://www.estrategiaconcursos.com.br" + url
-                print(f"{i+1}.\nNome: {nome_curso}\nQualificação: {qualificacao}\nURL: {url}\n")
-                course['id'] = i+1
-                course['nome'] = nome_curso
-                course['qualificacao'] = qualificacao
-                course['url'] = url
-                lista_cursos.append(course)
-            else:
-                i -= 1
-
-        escolha = input("> Digite a sua escolha: ")
+        print("+ Qual serviço deseja utilzar? \n")
+        print("1.\nListar Cursos\n")
+        print("2.\nBuscar por URL\n")
+        escolha = input("> Digite sua escolha: ")
         print('\n')
-        sair = True
-        for curso in lista_cursos:
-            if escolha == str(curso['id']):
-                sair = False
-                print("+ Obtendo dados do curso...")
-                time.sleep(1)
-                filename = os.path.join(os.getcwd(), clear_name(curso['nome']))
-                os.makedirs(filename, exist_ok=True)
-                os.system('cls' if os.name == 'nt' else 'clear')
-                data = get_course_data(page, curso)
-                total = return_total_videos(data)
-                indice = 0
-                os.system('cls' if os.name == 'nt' else 'clear')
+        time.sleep(0.5)
 
-                for item in tqdm(data, desc=f"Baixando Vídeos da {data[indice]['nome']}", total=total):
-
-                    nome_aula = f"{item['id']}_{item['nome']}"
-                    dir_aula = os.path.join(filename, clear_name(nome_aula))
-                    os.makedirs(dir_aula, exist_ok=True)
-                    for video in item['videos']:
-                        nome_video = f"{clear_name(video['id'])}_{clear_name(video['nome'])}.mp4"
-                        nome_video = f"{clear_name(video['id'])}.mp4"
-                        path = os.path.join(dir_aula, nome_video)
-                        print('\n')
-                        wget.download(video['link'], 'temp.mp4')
-                        os.system('cls')
-                        try:
-                            os.rename('temp.mp4', path)
-                        except FileExistsError:
-                            os.remove(path)
-                            os.rename('temp.mp4', path)
-                    indice += 1
-
-                print('\n')
-                print("> Curso baixado com sucesso")
-                remove_tmp_files(os.getcwd())
-        if sair:
-            print("x Opção Inválida")
+        print("+ Qual a resolução do download do vídeo? \n")
+        print("1. 720p\n")
+        print("2. 480p\n")
+        print("3. 360p\n")
+        resolucao = input("> Digite sua escolha: ")
+        if resolucao == "1":
+            resolucao = '720p'
+        elif resolucao == "2":
+            resolucao = '480p'
+        elif resolucao == "3":
+            resolucao = '360p'
+        else:
+            print("x Opção inválida. Por favor, tente novamente.")
+            time.sleep(1.5)
             exit(0)
+
+        if escolha == "1":
+            download_por_lista(page, resolucao)
+
+        elif escolha == "2":
+            url = input("> Digite ou Cole aqui o link do Curso: ")
+            download_por_url(page, url, resolucao)
 
         browser.close()
 
 if __name__ == "__main__":
     subprocess.run('playwright install chromium', shell=True, check=True)
     txt_file = create_txt()
-    try:
-        os.remove('temp.mp4')
-    except:
-        pass
 
     os.system('cls' if os.name == 'nt' else 'clear')
     print("+ Selecione o seu provedor de serviços:\n")

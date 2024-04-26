@@ -6,6 +6,7 @@ import time
 from tqdm import tqdm
 from unidecode import unidecode
 import sys
+import wget
 
 def create_txt():
     """
@@ -103,10 +104,10 @@ def return_courses(page) -> list:
     page.goto("https://www.estrategiaconcursos.com.br/app/dashboard/cursos")
     page.wait_for_selector('//section[@id]')
     elementos = page.query_selector_all('//section[@id]')
-    print(f"Quantidade de cursos: {len(elementos)}")
+    print(f"+ Quantidade de cursos: {len(elementos)}")
     return elementos
 
-def get_course_data(page, curso: dict) -> list:
+def get_course_data(page, curso: dict, resolucao:str) -> list:
     """
     Obtém os dados de um curso.
 
@@ -141,7 +142,10 @@ def get_course_data(page, curso: dict) -> list:
             video_nome = video.wait_for_selector('xpath=.//span[contains(@class, "title")]')
             url.click()
             time.sleep(0.5)
-            video_link = lesson.wait_for_selector('xpath=.//video').get_attribute('src')
+            download_options = page.wait_for_selector('xpath=//*[contains(text(), "download")]/../..')
+            download_options.click()
+            time.sleep(0.5)
+            video_link = page.wait_for_selector(f'xpath=//*[contains(text(), "veis:")]/following-sibling::div/a[contains(text(), "{resolucao}")]').get_attribute('href')
             v['id'] = video_num.inner_text()
             v['nome'] = video_nome.inner_text()
             v['link'] = video_link
@@ -183,3 +187,131 @@ def remove_tmp_files(directory:str) -> bool:
         if filename.endswith(".tmp"):
             file_path = os.path.join(directory, filename)
             os.remove(file_path)
+
+def download_por_lista(page, resolucao):
+    cursos = return_courses(page)
+    lista_cursos = []
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print("+ Selecione o que deseja baixar: \n")
+    for i, curso in enumerate(cursos):
+        course = {}
+        nome_curso = curso.wait_for_selector('xpath=.//h1').inner_text()
+        qualificacao = curso.wait_for_selector('xpath=./../../h2').inner_text()
+        url = curso.wait_for_selector('xpath=./a').get_attribute('href')
+        if 'aula' in url:
+            url = "https://www.estrategiaconcursos.com.br" + url
+            print(f"{i+1}.\nNome: {nome_curso}\nQualificação: {qualificacao}\nURL: {url}\n")
+            course['id'] = i+1
+            course['nome'] = nome_curso
+            course['qualificacao'] = qualificacao
+            course['url'] = url
+            lista_cursos.append(course)
+        else:
+            i -= 1
+
+    escolha = input("> Digite a sua escolha: ")
+    print('\n')
+    sair = True
+    for curso in lista_cursos:
+        if escolha == str(curso['id']):
+            sair = False
+            print("+ Obtendo dados do curso...")
+            time.sleep(1)
+            filename = os.path.join(os.getcwd(), clear_name(curso['nome']))
+            os.makedirs(filename, exist_ok=True)
+            os.system('cls' if os.name == 'nt' else 'clear')
+            data = get_course_data(page, curso, resolucao)
+            total = return_total_videos(data)
+            indice = 0
+            os.system('cls' if os.name == 'nt' else 'clear')
+
+            for item in tqdm(data, desc=f"Baixando Vídeo: {data[indice]['nome']}", total=total):
+
+                nome_aula = f"{item['id']}_{item['nome']}"
+                dir_aula = os.path.join(filename, f'Aula {indice+1} - ' + clear_name(nome_aula).split('-')[0].strip())
+                os.makedirs(dir_aula, exist_ok=True)
+                
+                for video in item['videos']:
+                    nome_video = f"{clear_name(video['id'])} - {clear_name(video['nome'])}.mp4"
+                    path = os.path.join(dir_aula, nome_video)
+                    print('\n')
+                    wget.download(video['link'], path)
+                    os.system('cls')
+                indice += 1
+
+            print('\n')
+            print("> Curso baixado com sucesso")
+            remove_tmp_files(os.getcwd())
+    if sair:
+        print("x Opção Inválida")
+        exit(0)
+
+def download_por_url(page, url: str, resolucao: str):
+    """
+    Faz Download do Curso através do link.
+
+    Args:
+        page: Classe Página do Playwright.
+        url: Link do Curso.
+    """
+
+    lista_aulas = []
+    page.goto(url)
+    print("+ Obtendo dados do curso...")
+
+    page.wait_for_selector('//*[@class="LessonList"]')
+    lesson_list = page.query_selector_all('//*[@class="LessonList"]//section')
+    course_title = page.wait_for_selector('h2[class*="title"]').inner_text()
+    for lesson in tqdm(lesson_list, desc="Processando aulas"):
+        aula = {}
+        aula_num = lesson.wait_for_selector('xpath=.//a//h2')                        
+        aula_nome = lesson.wait_for_selector('xpath=.//a//p')
+        lesson.click()
+        time.sleep(1)
+        aula['id'] = aula_num.inner_text()
+        aula['nome'] = aula_nome.inner_text()
+        videos_list = []
+
+        page.wait_for_selector('xpath=//*[@class="LessonList"]//section//div[@class="ListVideos-items-video"]')
+        videos = lesson.query_selector_all('xpath=.//div[@class="ListVideos-items-video"]')
+        for video in videos:
+            v = {}
+            url = video.wait_for_selector('xpath=./a')
+            video_num =  video.wait_for_selector('xpath=.//span[contains(@class, "index")]')
+            video_nome = video.wait_for_selector('xpath=.//span[contains(@class, "title")]')
+            url.click()
+            time.sleep(0.5)
+            download_options = page.wait_for_selector('xpath=//*[contains(text(), "download")]/../..')
+            download_options.click()
+            time.sleep(0.5)
+            video_link = page.wait_for_selector(f'xpath=//*[contains(text(), "veis:")]/following-sibling::div/a[contains(text(), "{resolucao}")]').get_attribute('href')
+
+            v['id'] = video_num.inner_text()
+            v['nome'] = video_nome.inner_text()
+            v['link'] = video_link
+            videos_list.append(v)
+        aula['videos'] = videos_list
+        lista_aulas.append(aula)
+    #______________
+    total = return_total_videos(lista_aulas)
+    indice = 0
+    filename = os.path.join(os.getcwd(), clear_name(course_title))
+    os.makedirs(filename, exist_ok=True)
+    os.system('cls' if os.name == 'nt' else 'clear')
+    for item in tqdm(lista_aulas, desc=f"Baixando Vídeos da {lista_aulas[indice]['nome']}", total=total):
+
+        nome_aula = f"{item['id']}_{item['nome']}"
+        dir_aula = os.path.join(filename, f'Aula {indice+1} - ' + clear_name(nome_aula).split('-')[0].strip())
+        os.makedirs(dir_aula, exist_ok=True)
+        
+        for video in item['videos']:
+            nome_video = f"{clear_name(video['id'])} - {clear_name(video['nome'])}.mp4"
+            path = os.path.join(dir_aula, nome_video)
+            print('\n')
+            wget.download(video['link'], path)
+            os.system('cls')
+        indice += 1
+
+    print('\n')
+    print("> Curso baixado com sucesso")
+    remove_tmp_files(os.getcwd())
