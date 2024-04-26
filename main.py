@@ -98,7 +98,6 @@ def main():
         browser.close()
 
 if __name__ == "__main__":
-    subprocess.run('playwright install chromium', shell=True, check=True)
     txt_file = create_txt()
 
     os.system('cls' if os.name == 'nt' else 'clear')
