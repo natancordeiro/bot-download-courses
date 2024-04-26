@@ -46,6 +46,12 @@ Antes de começar, você precisa ter o Python instalado em sua máquina. Se voc�
         pip install -r requirements.txt
 
         ```
+   -   Instale a biblioteca de automação separadamente usando o seguinte comando:
+
+        ```
+        playwright install chromium
+
+        ```
 
 Executando o Robô
 -----------------
