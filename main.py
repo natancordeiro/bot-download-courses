@@ -1,15 +1,19 @@
 from playwright.sync_api import sync_playwright
 import time
 import os
-import subprocess
 
 from functions import *
 
 def main():
+    def handle_download(download):
+        download.save_as(os.getcwd())
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False)
         context = browser.new_context()
+        context.set_default_timeout(15000)
+        context.on("download", handle_download)
+
         page = context.new_page()
         with open(txt_file, 'r') as file:
             lines = file.readlines()
