@@ -138,7 +138,6 @@ def get_course_data(page, curso: dict, resolucao:str) -> list:
         aula_num = lesson.wait_for_selector('xpath=.//a//h2')                        
         aula_nome = lesson.wait_for_selector('xpath=.//a//p')
         lesson.click()
-        time.sleep(1)
         link_pdf = page.wait_for_selector('xpath=//div[@class="Lesson-contentTop"]//a').get_attribute('href')
 
 
@@ -147,7 +146,6 @@ def get_course_data(page, curso: dict, resolucao:str) -> list:
         aula['link_pdf'] = link_pdf
         videos_list = []
 
-        page.wait_for_selector('xpath=//*[@class="LessonList"]//section//div[@class="ListVideos-items-video"]')
         videos = lesson.query_selector_all('xpath=.//div[@class="ListVideos-items-video"]')
         for video in videos:
             v = {}
@@ -172,8 +170,9 @@ def return_total_videos(dict) -> int:
     """Retorna o valor total de videos."""
 
     total_videos = 0
-    for aula in dict:
-        total_videos += len(aula['videos'])
+    if len(dict) > 0:
+        for aula in dict:
+            total_videos += len(aula['videos'])
     return total_videos
 
 def clear_name(name: str) -> str:
@@ -236,22 +235,27 @@ def download_por_lista(page, resolucao):
             os.system('cls' if os.name == 'nt' else 'clear')
             data = get_course_data(page, curso, resolucao)
             total = return_total_videos(data)
+            if total == 0 and sum(1 for d in data if 'link_pdf' in d) > 0:
+                print('- Curso não há videos, somente PDF.')
+                time.sleep(3)
             indice = 0
             os.system('cls' if os.name == 'nt' else 'clear')
 
-            for item in tqdm(data, desc=f"Baixando Vídeo: {data[indice]['nome']}", total=total):
+            for item in tqdm(data, desc=f"Baixando Aulas"):
 
-                nome_aula = f"{item['id']}_{item['nome']}"
-                dir_aula = os.path.join(filename, f'Aula {indice+1} - ' + clear_name(nome_aula).split('-')[0].strip())
+                nome_aula = f"{item['nome']}"
+                dir_aula = os.path.join(filename, f'Aula {indice+1} - ' + clear_name(nome_aula).strip())
                 os.makedirs(dir_aula, exist_ok=True)
-                download_pdf(data['link_pdf'], f"{item['name']}.pdf")
+                file_pdf = f'Aula {indice+1}.pdf'
+                download_pdf(data[indice]['link_pdf'], os.path.join(dir_aula, file_pdf))
                 
-                for video in item['videos']:
-                    nome_video = f"{clear_name(video['id'])} - {clear_name(video['nome'])}.mp4"
-                    path = os.path.join(dir_aula, nome_video)
-                    print('\n')
-                    wget.download(video['link'], path)
-                    os.system('cls')
+                if len(item['videos']) > 0:
+                    for video in item['videos']:
+                        nome_video = f"{clear_name(video['id'])} - {clear_name(video['nome'])}.mp4"
+                        path = os.path.join(dir_aula, nome_video)
+                        print('\n')
+                        wget.download(video['link'], path)
+                        os.system('cls')
                 indice += 1
 
             print('\n')
@@ -291,18 +295,13 @@ def download_por_url(page, url: str, resolucao: str):
         aula_num = lesson.wait_for_selector('xpath=.//a//h2')                        
         aula_nome = lesson.wait_for_selector('xpath=.//a//p')
         lesson.click()
-        time.sleep(1)
         link_pdf = page.wait_for_selector('xpath=//div[@class="Lesson-contentTop"]//a').get_attribute('href')
 
         aula['id'] = aula_num.inner_text()
         aula['nome'] = aula_nome.inner_text()
+        aula['link_pdf'] = link_pdf
         videos_list = []
 
-        try:
-            page.wait_for_selector('xpath=//*[@class="LessonList"]//section//div[@class="ListVideos-items-video"]')
-        except Exception as e:
-            print(f'Nenhum vídeo encontrado para a aula {aula['nome']}')
-            break
         videos = lesson.query_selector_all('xpath=.//div[@class="ListVideos-items-video"]')
         for video in videos:
             v = {}
@@ -324,23 +323,28 @@ def download_por_url(page, url: str, resolucao: str):
         lista_aulas.append(aula)
     #______________
     total = return_total_videos(lista_aulas)
+    if total == 0 and sum(1 for d in lista_aulas if 'link_pdf' in d) > 0:
+        print('- Curso não há videos, somente PDF.')
+        time.sleep(3)
     indice = 0
     direname = os.path.join(os.getcwd(), clear_name(course_title))
     os.makedirs(direname, exist_ok=True)
     os.system('cls' if os.name == 'nt' else 'clear')
-    for item in tqdm(lista_aulas, desc=f"Baixando Vídeos da {lista_aulas[indice]['nome']}", total=total):
+    for item in tqdm(lista_aulas, desc=f"Baixando Aulas"):
 
-        nome_aula = f"{item['id']}_{item['nome']}"
-        dir_aula = os.path.join(direname, f'Aula {indice+1} - ' + clear_name(nome_aula).split('-')[0].strip())
+        nome_aula = f"{item['nome']}"
+        dir_aula = os.path.join(direname, f'Aula {indice+1} - ' + clear_name(nome_aula).strip())
         os.makedirs(dir_aula, exist_ok=True)
-        download_pdf(link_pdf, f"{clear_name(course_title)}.pdf")
+        file_pdf = f'Aula {indice+1}.pdf'
+        download_pdf(lista_aulas[indice]['link_pdf'], os.path.join(dir_aula, file_pdf))
         
-        for video in item['videos']:
-            nome_video = f"{clear_name(video['id'])} - {clear_name(video['nome'])}.mp4"
-            path = os.path.join(dir_aula, nome_video)
-            print('\n')
-            wget.download(video['link'], path)
-            os.system('cls')
+        if len(item['videos']) > 0:
+            for video in item['videos']:
+                nome_video = f"{clear_name(video['id'])} - {clear_name(video['nome'])}.mp4"
+                path = os.path.join(dir_aula, nome_video)
+                print('\n')
+                wget.download(video['link'], path)
+                os.system('cls')
         indice += 1
 
     print('\n')
@@ -359,6 +363,3 @@ def download_pdf(link: str, filename: str):
     if response.status_code == 200:
         with open(filename, 'wb') as f:
             f.write(response.content)
-        print("> PDF da aula baixado com sucesso")
-    else:
-        print("x Falha ao baixar o PDF")
