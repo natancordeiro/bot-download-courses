@@ -147,16 +147,17 @@ def get_course_data(page, curso: dict, resolucao:str) -> list:
         videos_list = []
 
         videos = lesson.query_selector_all('xpath=.//div[@class="ListVideos-items-video"]')
-        for video in videos:
+        for i, video in enumerate(videos):
             v = {}
             url = video.wait_for_selector('xpath=./a')
             video_num =  video.wait_for_selector('xpath=.//span[contains(@class, "index")]')
             video_nome = video.wait_for_selector('xpath=.//span[contains(@class, "title")]')
             url.click()
             time.sleep(0.5)
-            download_options = page.wait_for_selector('xpath=//*[contains(text(), "download")]/../..')
-            download_options.click()
-            time.sleep(0.5)
+            if i == 0:
+                download_options = page.wait_for_selector('xpath=//*[contains(text(), "download")]/../..')
+                download_options.click()
+                time.sleep(0.5)
             video_link = page.wait_for_selector(f'xpath=//*[contains(text(), "veis:")]/following-sibling::div/a[contains(text(), "{resolucao}")]').get_attribute('href')
             v['id'] = video_num.inner_text()
             v['nome'] = video_nome.inner_text()
@@ -303,16 +304,17 @@ def download_por_url(page, url: str, resolucao: str):
         videos_list = []
 
         videos = lesson.query_selector_all('xpath=.//div[@class="ListVideos-items-video"]')
-        for video in videos:
+        for i, video in enumerate(videos):
             v = {}
             url = video.wait_for_selector('xpath=./a')
             video_num =  video.wait_for_selector('xpath=.//span[contains(@class, "index")]')
             video_nome = video.wait_for_selector('xpath=.//span[contains(@class, "title")]')
             url.click()
             time.sleep(0.5)
-            download_options = page.wait_for_selector('xpath=//*[contains(text(), "download")]/../..')
-            download_options.click()
-            time.sleep(0.5)
+            if i == 0:
+                download_options = page.wait_for_selector('xpath=//*[contains(text(), "download")]/../..')
+                download_options.click()
+                time.sleep(0.5)
             video_link = page.wait_for_selector(f'xpath=//*[contains(text(), "veis:")]/following-sibling::div/a[contains(text(), "{resolucao}")]').get_attribute('href')
 
             v['id'] = video_num.inner_text()
