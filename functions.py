@@ -245,14 +245,14 @@ def download_por_lista(page, resolucao):
             for item in tqdm(data, desc=f"Baixando Aulas"):
 
                 nome_aula = f"{item['nome']}"
-                dir_aula = os.path.join(filename, f'Aula {indice+1} - ' + clear_name(nome_aula).strip())
+                dir_aula = os.path.join(filename, f'Aula {indice+1} - ' + clear_name(' '.join(nome_aula.split(' ')[:4])).strip())
                 os.makedirs(dir_aula, exist_ok=True)
                 file_pdf = f'Aula {indice+1}.pdf'
                 download_pdf(data[indice]['link_pdf'], os.path.join(dir_aula, file_pdf))
                 
                 if len(item['videos']) > 0:
                     for video in item['videos']:
-                        nome_video = f"{clear_name(video['id'])} - {clear_name(video['nome'])}.mp4"
+                        nome_video = f"{clear_name(video['id'])} - {clear_name(' '.join(video['nome'].split(' ')[:4]))}.mp4"
                         path = os.path.join(dir_aula, nome_video)
                         print('\n')
                         wget.download(video['link'], path)
@@ -335,14 +335,14 @@ def download_por_url(page, url: str, resolucao: str):
     for item in tqdm(lista_aulas, desc=f"Baixando Aulas"):
 
         nome_aula = f"{item['nome']}"
-        dir_aula = os.path.join(direname, f'Aula {indice+1} - ' + clear_name(nome_aula).strip())
+        dir_aula = os.path.join(direname, f'Aula {indice+1} - ' + clear_name(' '.join(nome_aula.split(' ')[:4])).strip())
         os.makedirs(dir_aula, exist_ok=True)
         file_pdf = f'Aula {indice+1}.pdf'
         download_pdf(lista_aulas[indice]['link_pdf'], os.path.join(dir_aula, file_pdf))
         
         if len(item['videos']) > 0:
             for video in item['videos']:
-                nome_video = f"{clear_name(video['id'])} - {clear_name(video['nome'])}.mp4"
+                nome_video = f"{clear_name(video['id'])} - {clear_name(' '.join(video['nome'].split(' ')[:4]))}.mp4"
                 path = os.path.join(dir_aula, nome_video)
                 print('\n')
                 wget.download(video['link'], path)
