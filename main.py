@@ -97,7 +97,26 @@ def main():
 
         elif escolha == "2":
             url = input("> Digite ou Cole aqui o link do Curso: ")
-            download_por_url(page, url, resolucao)
+            if 'pacote' in url:
+                page.goto(url)
+                page.wait_for_selector('xpath=//div[@class="containerCursos"]')
+                pacote = page.wait_for_selector('xpath=//h2').inner_text()
+                pacote_name = ' '.join(pacote.split(' ')[:4]).split('(')[0]
+                path_pacote = os.path.join(os.getcwd(), clear_name(pacote_name.strip()))
+                os.makedirs(path_pacote, exist_ok=True)
+                
+                time.sleep(1)
+                lista_cursos = page.query_selector_all('xpath=//div[@class="containerCursos"]/a')
+                print(f"- Pacote identificado: {pacote_name} com {len(lista_cursos)} cursos para baixar.")
+                links = []
+                for curso in lista_cursos:
+                    link = 'https://www.estrategiaconcursos.com.br' + curso.get_attribute('href')
+                    links.append(link)
+
+                for link in links:
+                    download_por_url(page, link, resolucao, pacote_path=path_pacote)
+            else:
+                download_por_url(page, url, resolucao, pacote_path=None)
 
         browser.close()
 

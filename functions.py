@@ -229,44 +229,97 @@ def download_por_lista(page, resolucao):
     for curso in lista_cursos:
         if escolha == str(curso['id']):
             sair = False
-            print("+ Obtendo dados do curso...")
-            time.sleep(1)
-            filename = os.path.join(os.getcwd(), clear_name(curso['nome']))
-            os.makedirs(filename, exist_ok=True)
-            os.system('cls' if os.name == 'nt' else 'clear')
-            data = get_course_data(page, curso, resolucao)
-            total = return_total_videos(data)
-            if total == 0 and sum(1 for d in data if 'link_pdf' in d) > 0:
-                print('- Curso não há videos, somente PDF.')
-                time.sleep(3)
-            indice = 0
-            os.system('cls' if os.name == 'nt' else 'clear')
+            if 'pacote' in curso['url']:
 
-            for item in tqdm(data, desc=f"Baixando Aulas"):
+                page.goto(curso['url'])
+                page.wait_for_selector('xpath=//div[@class="containerCursos"]')
+                pacote = page.wait_for_selector('xpath=//h2').inner_text()
+                pacote_name = ' '.join(pacote.split(' ')[:4]).split('(')[0]
+                path_pacote = os.path.join(os.getcwd(), clear_name(pacote_name.strip()))
+                os.makedirs(path_pacote, exist_ok=True)
+                time.sleep(1)
+                courses_list = page.query_selector_all('xpath=//div[@class="containerCursos"]/a')
+                print(f"- Pacote identificado: {pacote_name} com {len(courses_list)} cursos para baixar.")
+                links = []
+                for cur in courses_list:
+                    link = 'https://www.estrategiaconcursos.com.br' + cur.get_attribute('href')
+                    links.append(link)
+                for link in links:
+                    print("+ Obtendo dados do curso...")
+                    time.sleep(1)
 
-                nome_aula = f"{item['nome']}"
-                dir_aula = os.path.join(filename, f'Aula {indice+1} - ' + clear_name(' '.join(nome_aula.split(' ')[:4])).strip())
-                os.makedirs(dir_aula, exist_ok=True)
-                file_pdf = f'Aula {indice+1}.pdf'
-                download_pdf(data[indice]['link_pdf'], os.path.join(dir_aula, file_pdf))
-                
-                if len(item['videos']) > 0:
-                    for video in item['videos']:
-                        nome_video = f"{clear_name(video['id'])} - {clear_name(' '.join(video['nome'].split(' ')[:4]))}.mp4"
-                        path = os.path.join(dir_aula, nome_video)
-                        print('\n')
-                        wget.download(video['link'], path)
-                        os.system('cls')
-                indice += 1
+                    curso['url'] = link
+                    filename = os.path.join(os.getcwd(), clear_name(curso['nome']))
+                    os.makedirs(filename, exist_ok=True)
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    data = get_course_data(page, curso, resolucao)
+                    total = return_total_videos(data)
+                    if total == 0 and sum(1 for d in data if 'link_pdf' in d) > 0:
+                        print('- Curso não há videos, somente PDF.')
+                        time.sleep(3)
+                    indice = 0
+                    os.system('cls' if os.name == 'nt' else 'clear')
 
-            print('\n')
-            print("> Curso baixado com sucesso")
-            remove_tmp_files(os.getcwd())
+                    for item in tqdm(data, desc=f"Baixando Aulas"):
+
+                        nome_aula = f"{item['nome']}"
+                        dir_aula = os.path.join(filename, f'Aula {indice+1} - ' + clear_name(' '.join(nome_aula.split(' ')[:4])).strip())
+                        os.makedirs(dir_aula, exist_ok=True)
+                        file_pdf = f'Aula {indice+1}.pdf'
+                        download_pdf(data[indice]['link_pdf'], os.path.join(dir_aula, file_pdf))
+                        
+                        if len(item['videos']) > 0:
+                            for video in item['videos']:
+                                nome_video = f"{clear_name(video['id'])} - {clear_name(' '.join(video['nome'].split(' ')[:4]))}.mp4"
+                                path = os.path.join(dir_aula, nome_video)
+                                print('\n')
+                                wget.download(video['link'], path)
+                                os.system('cls')
+                        indice += 1
+
+                    print('\n')
+                    print("> Curso baixado com sucesso")
+                    remove_tmp_files(os.getcwd())
+            else:
+
+                print("+ Obtendo dados do curso...")
+                time.sleep(1)
+                filename = os.path.join(os.getcwd(), clear_name(curso['nome']))
+                os.makedirs(filename, exist_ok=True)
+                os.system('cls' if os.name == 'nt' else 'clear')
+                data = get_course_data(page, curso, resolucao)
+                total = return_total_videos(data)
+                if total == 0 and sum(1 for d in data if 'link_pdf' in d) > 0:
+                    print('- Curso não há videos, somente PDF.')
+                    time.sleep(3)
+                indice = 0
+                os.system('cls' if os.name == 'nt' else 'clear')
+
+                for item in tqdm(data, desc=f"Baixando Aulas"):
+
+                    nome_aula = f"{item['nome']}"
+                    dir_aula = os.path.join(filename, f'Aula {indice+1} - ' + clear_name(' '.join(nome_aula.split(' ')[:4])).strip())
+                    os.makedirs(dir_aula, exist_ok=True)
+                    file_pdf = f'Aula {indice+1}.pdf'
+                    download_pdf(data[indice]['link_pdf'], os.path.join(dir_aula, file_pdf))
+                    
+                    if len(item['videos']) > 0:
+                        for video in item['videos']:
+                            nome_video = f"{clear_name(video['id'])} - {clear_name(' '.join(video['nome'].split(' ')[:4]))}.mp4"
+                            path = os.path.join(dir_aula, nome_video)
+                            print('\n')
+                            wget.download(video['link'], path)
+                            os.system('cls')
+                    indice += 1
+
+                print('\n')
+                print("> Curso baixado com sucesso")
+                remove_tmp_files(os.getcwd())
     if sair:
         print("x Opção Inválida")
         exit(0)
 
-def download_por_url(page, url: str, resolucao: str):
+def download_por_url(page, url: str, resolucao: str, pacote_path:str):
     """
     Faz Download do Curso através do link.
 
@@ -329,8 +382,13 @@ def download_por_url(page, url: str, resolucao: str):
         print('- Curso não há videos, somente PDF.')
         time.sleep(3)
     indice = 0
-    direname = os.path.join(os.getcwd(), clear_name(course_title))
-    os.makedirs(direname, exist_ok=True)
+    if pacote_path:
+        direname = os.path.join(pacote_path, clear_name(' '.join(course_title.split(' ')[:6]).split('-', -1)[0].strip()))
+        os.makedirs(direname, exist_ok=True)
+    else:
+        direname = os.path.join(os.getcwd(), clear_name(' '.join(course_title.split(' ')[:6]).split('-', -1)[0].strip()))
+        os.makedirs(direname, exist_ok=True)
+    
     os.system('cls' if os.name == 'nt' else 'clear')
     for item in tqdm(lista_aulas, desc=f"Baixando Aulas"):
 
