@@ -3,6 +3,7 @@ import time
 import os
 
 from functions.estrategia import *
+from functions.jurisico import *
 from functions.general import *
 
 class Cursos():
@@ -97,7 +98,7 @@ class Cursos():
 
             if self.servico == "1":
                 # Download por lista
-                download_por_lista(self.page, self.resolucao)
+                es_download_por_lista(self.page, self.resolucao)
 
             elif self.servico == "2":
                 # Download por URL
@@ -119,15 +120,17 @@ class Cursos():
                         links.append(link)
 
                     for link in links:
-                        download_por_url(self.page, link, self.resolucao, pacote_path=path_pacote)
+                        es_download_por_url(self.page, link, self.resolucao, pacote_path=path_pacote)
                 else:
-                    download_por_url(self.page, url, self.resolucao, pacote_path=None)
+                    es_download_por_url(self.page, url, self.resolucao, pacote_path=None)
+        
+        self.browser.close()
 
     def juridico(self, txt_file):
         """Download dos Cursos Jurídicos da Estratégia Concursos."""
 
         with sync_playwright() as p:
-            self.browser = p.chromium.launch(headless=True)
+            self.browser = p.chromium.launch(headless=False)
             self.context = self.browser.new_context()
             self.context.set_default_timeout(15000)
             self.context.on("download", self.handle_download)
@@ -212,13 +215,13 @@ class Cursos():
 
             if self.servico == "1":
                 # Download por lista
-                ...
-            
+                ju_download_por_lista()
+                time.sleep(1)
+                # nome = //div[contains(@class, "content")]
             elif self.servico == "2":
                 # Download por URL
                 ...
 
-    def __del__(self):
         self.browser.close()
 
     def handle_download(self, download):

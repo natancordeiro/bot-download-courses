@@ -6,7 +6,7 @@ import wget
 
 from functions.general import *
 
-def return_courses(page) -> list:
+def es_return_courses(page) -> list:
     """
     Obtém a lista de cursos disponíveis.
 
@@ -29,7 +29,7 @@ def return_courses(page) -> list:
     print(f"+ Quantidade de cursos: {len(elementos)}")
     return elementos
 
-def get_course_data(page, curso: dict, resolucao:str) -> list:
+def es_get_course_data(page, curso: dict, resolucao:str) -> list:
     """
     Obtém os dados de um curso.
 
@@ -88,8 +88,8 @@ def return_total_videos(dict) -> int:
             total_videos += len(aula['videos'])
     return total_videos
 
-def download_por_lista(page, resolucao):
-    cursos = return_courses(page)
+def es_download_por_lista(page, resolucao):
+    cursos = es_return_courses(page)
     lista_cursos = []
     os.system('cls' if os.name == 'nt' else 'clear')
     print("+ Selecione o que deseja baixar: \n")
@@ -138,7 +138,7 @@ def download_por_lista(page, resolucao):
                     filename = os.path.join(os.getcwd(), clear_name(curso['nome']))
                     os.makedirs(filename, exist_ok=True)
                     os.system('cls' if os.name == 'nt' else 'clear')
-                    data = get_course_data(page, curso, resolucao)
+                    data = es_get_course_data(page, curso, resolucao)
                     total = return_total_videos(data)
                     if total == 0 and sum(1 for d in data if 'link_pdf' in d) > 0:
                         print('- Curso não há videos, somente PDF.')
@@ -173,7 +173,7 @@ def download_por_lista(page, resolucao):
                 filename = os.path.join(os.getcwd(), clear_name(curso['nome']))
                 os.makedirs(filename, exist_ok=True)
                 os.system('cls' if os.name == 'nt' else 'clear')
-                data = get_course_data(page, curso, resolucao)
+                data = es_get_course_data(page, curso, resolucao)
                 total = return_total_videos(data)
                 if total == 0 and sum(1 for d in data if 'link_pdf' in d) > 0:
                     print('- Curso não há videos, somente PDF.')
@@ -205,7 +205,7 @@ def download_por_lista(page, resolucao):
         print("x Opção Inválida")
         exit(0)
 
-def download_por_url(page, url: str, resolucao: str, pacote_path:str):
+def es_download_por_url(page, url: str, resolucao: str, pacote_path:str):
     """
     Faz Download do Curso através do link.
 
