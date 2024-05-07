@@ -2,7 +2,8 @@ from playwright.sync_api import sync_playwright
 import time
 import os
 
-from functions import *
+from functions.estrategia import *
+from functions.general import *
 
 class Cursos():
     """Classe responsável pela manipulação dos cursos."""
@@ -36,7 +37,7 @@ class Cursos():
                     time.sleep(1)
                     email = input("> Insira seu usuário: ")
                     password = input("> Insira sua senha: ")
-                    user_login = login(self.page, email, password)
+                    user_login = login_estrategia(self.page, email, password)
                     if user_login:
                         print("> Conta adicionada com sucesso")
                         save_file_name(self.page, txt_file, user_login)
@@ -62,7 +63,7 @@ class Cursos():
                 time.sleep(1)
                 email = input("> Insira seu usuário: ")
                 password = input("> Insira sua senha: ")
-                user_login = login(self.page, email, password)
+                user_login = login_estrategia(self.page, email, password)
                 if user_login:
                     print("+ Login efetuado com sucesso")
                 else:
@@ -151,7 +152,7 @@ class Cursos():
                     time.sleep(1)
                     email = input("> Insira seu usuário: ")
                     password = input("> Insira sua senha: ")
-                    user_login = login(self.page, email, password)
+                    user_login = login_estrategia(self.page, email, password)
                     if user_login:
                         print("> Conta adicionada com sucesso")
                         save_file_name(self.page, txt_file, user_login)
@@ -177,7 +178,7 @@ class Cursos():
                 time.sleep(1)
                 email = input("> Insira seu usuário: ")
                 password = input("> Insira sua senha: ")
-                user_login = login(self.page, email, password)
+                user_login = login_estrategia(self.page, email, password)
                 if user_login:
                     print("+ Login efetuado com sucesso")
                 else:

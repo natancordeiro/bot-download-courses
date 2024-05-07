@@ -1,7 +1,7 @@
 import os
 import time
 
-from functions import create_txt
+from functions.estrategia import create_txt
 from escolas import Cursos
 
 if __name__ == "__main__":
