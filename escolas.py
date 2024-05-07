@@ -122,16 +122,100 @@ class Cursos():
                 else:
                     download_por_url(self.page, url, self.resolucao, pacote_path=None)
 
-    def juridico(self):
+    def juridico(self, txt_file):
         """Download dos Cursos Jurídicos da Estratégia Concursos."""
 
-        if self.servico == "1":
-            # Download por lista
-            ...
-        
-        elif self.servico == "2":
-            # Download por URL
-            ...
+        with sync_playwright() as p:
+            self.browser = p.chromium.launch(headless=True)
+            self.context = self.browser.new_context()
+            self.context.set_default_timeout(15000)
+            self.context.on("download", self.handle_download)
+
+            self.page = self.context.new_page()
+            with open(txt_file, 'r') as file:
+                lines = file.readlines()
+            
+            if lines != []:
+                print("+ Como você deseja acessar este serviço?")
+                print("0.\nAdicionar e usar nova conta\n")
+                for line in lines:
+                    numero = int(line.split('-')[0].strip())
+                    nome_arquivo = line.split('-')[1].strip()
+                    nome_usuario = line.split('-')[2].strip()
+                    print(f"{numero}.\nAcessar usando a conta: {nome_usuario}\n")
+                escolha = input("> Digite sua escolha: ")
+                print('\n')
+
+                if escolha == "0":
+                    print("+ Adicionando conta...")
+                    time.sleep(1)
+                    email = input("> Insira seu usuário: ")
+                    password = input("> Insira sua senha: ")
+                    user_login = login(self.page, email, password)
+                    if user_login:
+                        print("> Conta adicionada com sucesso")
+                        save_file_name(self.page, txt_file, user_login)
+                    else:
+                        print("x Conta não adicionada com sucesso")
+                        exit(0)
+                else:
+                    sair = True
+                    for line in lines:
+                        numero = line.split('-')[0].strip()
+                        nome_arquivo = line.split('-')[1].strip()
+                        nome_usuario = line.split('-')[2].strip()
+                        if escolha == numero:
+                            print("+ Acessando conta") 
+                            time.sleep(1)
+                            self.page.context.add_cookies(load_cookies(nome_arquivo))
+                            sair = False
+                    if sair:
+                        print("x Opção Inválida")
+                        exit(0)
+            else:
+                print("- Login não localizado")
+                time.sleep(1)
+                email = input("> Insira seu usuário: ")
+                password = input("> Insira sua senha: ")
+                user_login = login(self.page, email, password)
+                if user_login:
+                    print("+ Login efetuado com sucesso")
+                else:
+                    print("x Login não efetuado com sucesso")
+                    exit(0)
+
+                save_file_name(self.page, txt_file, user_login)
+
+            print("+ Qual serviço deseja utilzar? \n")
+            print("1.\nListar Cursos\n")
+            print("2.\nBuscar por URL\n")
+            self.servico = input("> Digite sua escolha: ")
+            print('\n')
+            time.sleep(0.5)
+
+            print("+ Qual a resolução do download do vídeo? \n")
+            print("1. 720p\n")
+            print("2. 480p\n")
+            print("3. 360p\n")
+            resolucao = input("> Digite sua escolha: ")
+            if resolucao == "1":
+                self.resolucao = '720p'
+            elif resolucao == "2":
+                self.resolucao = '480p'
+            elif resolucao == "3":
+                self.resolucao = '360p'
+            else:
+                print("x Opção inválida. Por favor, tente novamente.")
+                time.sleep(1.5)
+                exit(0)
+
+            if self.servico == "1":
+                # Download por lista
+                ...
+            
+            elif self.servico == "2":
+                # Download por URL
+                ...
 
     def __del__(self):
         self.browser.close()
