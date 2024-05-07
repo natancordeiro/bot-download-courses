@@ -9,15 +9,17 @@ import sys
 import wget
 import requests
 
-def create_txt():
+def create_txt(curso: str):
     """
     Cria um arquivo temporário.
 
+    Args:
+        curso: Nome do curso.
     Returns:
         Nome do arquivo temporário.
     """
     temp_dir = tempfile.gettempdir()
-    txt_file = os.path.join(temp_dir, 'temp_file_name.txt')
+    txt_file = os.path.join(temp_dir, f'temp_{curso}.txt')
     try:
         with open(txt_file, 'r+') as file:
             arquivo = file.readline()
