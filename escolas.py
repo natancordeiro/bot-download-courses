@@ -38,10 +38,10 @@ class Cursos():
                     time.sleep(1)
                     email = input("> Insira seu usuário: ")
                     password = input("> Insira sua senha: ")
-                    user_login = login_estrategia(self.page, email, password)
+                    user_login, token = login_estrategia(self.page, email, password)
                     if user_login:
                         print("> Conta adicionada com sucesso")
-                        save_file_name(self.page, txt_file, user_login)
+                        save_file_name(self.page, txt_file, user_login, token)
                     else:
                         print("x Conta não adicionada com sucesso")
                         exit(0)
@@ -64,14 +64,14 @@ class Cursos():
                 time.sleep(1)
                 email = input("> Insira seu usuário: ")
                 password = input("> Insira sua senha: ")
-                user_login = login_estrategia(self.page, email, password)
+                user_login, token = login_estrategia(self.page, email, password)
                 if user_login:
                     print("+ Login efetuado com sucesso")
                 else:
                     print("x Login não efetuado com sucesso")
                     exit(0)
 
-                save_file_name(self.page, txt_file, user_login)
+                save_file_name(self.page, txt_file, user_login, token)
 
             print("+ Qual serviço deseja utilzar? \n")
             print("1.\nListar Cursos\n")
@@ -130,10 +130,9 @@ class Cursos():
         """Download dos Cursos Jurídicos da Estratégia Concursos."""
 
         with sync_playwright() as p:
-            self.browser = p.chromium.launch(headless=False)
-            self.context = self.browser.new_context()
+            self.browser = p.chromium.launch(channel='chrome', headless=True)
+            self.context = self.browser.new_context(accept_downloads=True)
             self.context.set_default_timeout(15000)
-            self.context.on("download", self.handle_download)
 
             self.page = self.context.new_page()
             with open(txt_file, 'r') as file:
@@ -146,6 +145,7 @@ class Cursos():
                     numero = int(line.split('-')[0].strip())
                     nome_arquivo = line.split('-')[1].strip()
                     nome_usuario = line.split('-')[2].strip()
+                    token = line.split('-')[3].strip()
                     print(f"{numero}.\nAcessar usando a conta: {nome_usuario}\n")
                 escolha = input("> Digite sua escolha: ")
                 print('\n')
@@ -155,10 +155,10 @@ class Cursos():
                     time.sleep(1)
                     email = input("> Insira seu usuário: ")
                     password = input("> Insira sua senha: ")
-                    user_login = login_estrategia(self.page, email, password)
+                    user_login, token = login_estrategia(self.page, email, password)
                     if user_login:
                         print("> Conta adicionada com sucesso")
-                        save_file_name(self.page, txt_file, user_login)
+                        save_file_name(self.page, txt_file, user_login, token)
                     else:
                         print("x Conta não adicionada com sucesso")
                         exit(0)
@@ -168,6 +168,7 @@ class Cursos():
                         numero = line.split('-')[0].strip()
                         nome_arquivo = line.split('-')[1].strip()
                         nome_usuario = line.split('-')[2].strip()
+                        token = line.split('-')[3].strip()
                         if escolha == numero:
                             print("+ Acessando conta") 
                             time.sleep(1)
@@ -181,14 +182,14 @@ class Cursos():
                 time.sleep(1)
                 email = input("> Insira seu usuário: ")
                 password = input("> Insira sua senha: ")
-                user_login = login_estrategia(self.page, email, password)
+                user_login, token = login_estrategia(self.page, email, password)
                 if user_login:
                     print("+ Login efetuado com sucesso")
                 else:
                     print("x Login não efetuado com sucesso")
                     exit(0)
 
-                save_file_name(self.page, txt_file, user_login)
+                save_file_name(self.page, txt_file, user_login, token)
 
             print("+ Qual serviço deseja utilzar? \n")
             print("1.\nListar Cursos\n")
@@ -215,14 +216,18 @@ class Cursos():
 
             if self.servico == "1":
                 # Download por lista
-                ju_download_por_lista()
+                ju_download_por_lista(self.resolucao, token)
                 time.sleep(1)
-                # nome = //div[contains(@class, "content")]
+
             elif self.servico == "2":
                 # Download por URL
-                ...
+                ju_download_por_lista(self.resolucao, token)
+                time.sleep(1)
 
-        self.browser.close()
+        try:
+            self.browser.close()
+        except:
+            pass
 
     def handle_download(self, download):
         download.save_as(os.getcwd())

@@ -1,5 +1,6 @@
 import requests
 import tempfile
+import zipfile
 import pickle
 import sys
 import os
@@ -41,7 +42,7 @@ def save_cookies(cookies: list):
         pickle.dump(cookies, arquivo)
         return arquivo.name
     
-def save_file_name(page, arquivo, user):
+def save_file_name(page, arquivo, user, token):
     nome_arquivo = save_cookies(page.context.cookies())
     print(f"- Cookies salvo em: {nome_arquivo}")
     with open(arquivo, 'w') as file:
@@ -54,7 +55,24 @@ def save_file_name(page, arquivo, user):
                 num = 1
         except:
             num = 1
-        file.writelines(f"{num} - {nome_arquivo} - {user}")
+        file.writelines(f"{num} - {nome_arquivo} - {user} - {token}")
+
+def unzip_file(zip_path, extract_to):
+    """
+    Descompacta um arquivo ZIP em um diretório especificado.
+
+    :param zip_path: Caminho para o arquivo ZIP.
+    :param extract_to: Diretório onde os arquivos serão extraídos.
+    """
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_to)
+    except zipfile.BadZipFile:
+        print(f"x O arquivo {zip_path} não é um arquivo ZIP válido.")
+    except FileNotFoundError:
+        print(f"x O arquivo {zip_path} não foi encontrado.")
+    except Exception as e:
+        print(f"x Ocorreu um erro ao descompactar o arquivo: {e}")
 
 def load_cookies(nome_arquivo: str):
     """
@@ -89,7 +107,8 @@ def login_estrategia(page, email: str, password: str):
 
         page.wait_for_url('https://perfil.estrategia.com/meu-perfil/')
         username = page.wait_for_selector('//span[contains(text(), "Ol")]/following-sibling::div/span').inner_text()
-        return username
+        token = page.context.storage_state()['origins'][0]['localStorage'][1]['value']
+        return username, token
     except Exception as e:
         print(e)
         return False
