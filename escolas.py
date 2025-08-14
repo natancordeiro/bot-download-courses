@@ -5,74 +5,36 @@ import os
 from functions.estrategia import *
 from functions.jurisico import *
 from functions.general import *
+from functions.state_utils import load_and_sanitize_state
 
 class Cursos():
     """Classe responsável pela manipulação dos cursos."""
 
-    def estrategia_concursos(self, txt_file):
-        """Download dos Cursos da Estratégia Concursos."""
+    def estrategia_concursos(self, state_path="state.json"):
+        """
+        Abre diretamente a dashboard de cursos usando state.json (sessão já logada),
+        pulando qualquer fluxo de login/seleção de conta.
+        """
+
+        # carrega e saneia o state.json
+        try:
+            state = load_and_sanitize_state(state_path)
+        except FileNotFoundError:
+            print(f"x Arquivo {state_path} não encontrado. Gere o state.json primeiro.")
+            return
+        except Exception as e:
+            print(f"x Falha ao ler {state_path}: {e}")
+            return
 
         with sync_playwright() as p:
-            self.browser = p.chromium.launch(headless=True)
-            self.context = self.browser.new_context()
-            self.context.set_default_timeout(15000)
+            self.browser = p.chromium.launch(headless=False, channel='chrome')
+
+            # cria contexto já com os cookies/autenticação
+            self.context = self.browser.new_context(storage_state=state)
             self.context.on("download", self.handle_download)
-
             self.page = self.context.new_page()
-            with open(txt_file, 'r') as file:
-                lines = file.readlines()
-            
-            if lines != []:
-                print("+ Como você deseja acessar este serviço?")
-                print("0.\nAdicionar e usar nova conta\n")
-                for line in lines:
-                    numero = int(line.split('-')[0].strip())
-                    nome_arquivo = line.split('-')[1].strip()
-                    nome_usuario = line.split('-')[2].strip()
-                    print(f"{numero}.\nAcessar usando a conta: {nome_usuario}\n")
-                escolha = input("> Digite sua escolha: ")
-                print('\n')
 
-                if escolha == "0":
-                    print("+ Adicionando conta...")
-                    time.sleep(1)
-                    email = input("> Insira seu usuário: ")
-                    password = input("> Insira sua senha: ")
-                    user_login, token = login_estrategia(self.page, email, password)
-                    if user_login:
-                        print("> Conta adicionada com sucesso")
-                        save_file_name(self.page, txt_file, user_login, token)
-                    else:
-                        print("x Conta não adicionada com sucesso")
-                        exit(0)
-                else:
-                    sair = True
-                    for line in lines:
-                        numero = line.split('-')[0].strip()
-                        nome_arquivo = line.split('-')[1].strip()
-                        nome_usuario = line.split('-')[2].strip()
-                        if escolha == numero:
-                            print("+ Acessando conta") 
-                            time.sleep(1)
-                            self.page.context.add_cookies(load_cookies(nome_arquivo))
-                            sair = False
-                    if sair:
-                        print("x Opção Inválida")
-                        exit(0)
-            else:
-                print("- Login não localizado")
-                time.sleep(1)
-                email = input("> Insira seu usuário: ")
-                password = input("> Insira sua senha: ")
-                user_login, token = login_estrategia(self.page, email, password)
-                if user_login:
-                    print("+ Login efetuado com sucesso")
-                else:
-                    print("x Login não efetuado com sucesso")
-                    exit(0)
-
-                save_file_name(self.page, txt_file, user_login, token)
-
+            # Reaproveita o seu menu existente
             print("+ Qual serviço deseja utilzar? \n")
             print("1.\nListar Cursos\n")
             print("2.\nBuscar por URL\n")
@@ -97,12 +59,12 @@ class Cursos():
                 exit(0)
 
             if self.servico == "1":
-                # Download por lista
                 es_download_por_lista(self.page, self.resolucao)
 
             elif self.servico == "2":
                 # Download por URL
-                url = input("> Digite ou Cole aqui o link do Curso: ")
+                print("> Informe a URL completa do curso:")
+                url = input("> ")
                 if 'pacote' in url:
                     self.page.goto(url)
                     self.page.wait_for_selector('xpath=//div[@class="containerCursos"]')

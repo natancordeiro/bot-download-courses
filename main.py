@@ -15,9 +15,8 @@ if __name__ == "__main__":
     print('\n')
 
     if escolha == "1":
-        txt_file = create_txt('estrategia')
         curso = Cursos()
-        curso.estrategia_concursos(txt_file)
+        curso.estrategia_concursos("state.json")
 
     elif escolha == "2":
         txt_file = create_txt('juridico')

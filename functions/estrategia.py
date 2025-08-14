@@ -109,6 +109,10 @@ def es_download_por_lista(page, resolucao):
         else:
             i -= 1
 
+    if not course:
+        print("x Nenhum curso encontrado.")
+        page.close()
+        sys.exit(0)
     escolha = input("> Digite a sua escolha: ")
     print('\n')
     sair = True
